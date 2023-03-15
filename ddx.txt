@@ -1,0 +1,31 @@
+data Func = X -- f(x) = x
+          | Sin Func -- f(x) = sen(g(x))
+          | Cos Func -- f(x) = cos(g(x))
+          | Exp Func -- f(x) = e^g(x)
+          | Ln Func  -- f(x) = ln(g(x))
+          | Power Func Double -- f(x) = g(x)^n
+          | Const Double -- f(x) = k
+          | Sum Func Func -- h(x)= f(x) + g(x)
+          | Mult Func Func -- h(x) = f(x) * g(x)
+          | Div  Func Func -- h(x) = (f(x) / g(x))
+          deriving Show
+
+ddx :: Func -> Func
+ddx X = Const 1
+ddx (Sin f) = Mult (Cos f) (ddx f)
+ddx (Cos f) = Mult (Mult (Const (-1)) (Sin f)) (ddx f)
+ddx (Exp f) = Mult (Exp f) (ddx f)
+ddx (Ln f) = Mult (Div (Const 1) f) (ddx f)
+ddx (Power f  n) = Mult(Mult (Const n) (Power f (n-1))) (ddx f)
+ddx (Sum f g) = Sum (ddx f) (ddx g)
+ddx (Mult (Const k) f) = Mult (Const k) (ddx f)
+ddx (Mult f g) = Sum (Mult (ddx f) g) (Mult f (ddx g))
+ddx (Div f g) = Div (Sum (Mult (ddx f) g) (Mult (Const (-1)) (Mult f (ddx g)))) (Power g 2)
+ddx (Const k) = Const 0
+
+> ddx (Mult (Const 3) (Power X 4))
+Mult (Const 3.0) (Mult (Mult (Const 4.0) (Power X 3.0)) (Const 1.0))
+
+> ddx (Mult (Exp (Mult (Const 2) (Power X 3))) (Cos (Mult (Const 3) X)))
+
+> ddx (Exp (Power X 2))
